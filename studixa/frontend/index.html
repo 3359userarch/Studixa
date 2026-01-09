@@ -510,6 +510,7 @@ button.primary:hover {
 </div>
 
 <script>
+const API_URL = "https://studixa-backend.onrender.com";
 
 const sections=document.querySelectorAll('.section');
 const notesTitle = document.getElementById("notesTitle");
@@ -785,7 +786,7 @@ async function register() {
   }
 
   try {
-    const res = await fetch("https://studixa.onrender.com/api/auth/register", {
+    const res = await fetch(`${API_URL}/api/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -815,7 +816,7 @@ async function register() {
 
 async function login(){
   try{
-    const res = await fetch("https://studixa.onrender.com/api/auth/login",{
+    const res = await fetch(`${API_URL}/api/auth/login`, {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body:JSON.stringify({
@@ -880,7 +881,8 @@ document.addEventListener("click",e=>{
   if(!token) return;
 
   try{
-    const res = await fetch("https://studixa.onrender.com/api/auth/profile",{
+    const res = await fetch(`${API_URL}/api/auth/profile`, {
+
       headers:{
         "Authorization":"Bearer "+token
       }
