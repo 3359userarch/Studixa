@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Studixa</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,sans-serif;
+  background:#0f172a;
+  color:#e5e7eb;
+}
+
+/* NAVBAR */
+.navbar{
+  height:60px;
+  background:#020617;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid #1e293b;
+}
+.logo{color:#38bdf8;font-weight:bold;font-size:20px}
+.nav-right button{
+  background:none;border:none;color:#e5e7eb;
+  margin-left:15px;cursor:pointer
+}
+.nav-right button:hover{color:#38bdf8}
+
+/* PROFILE */
+.profile{position:relative;cursor:pointer}
+.profile-menu{
+  position:absolute;right:0;top:40px;
+  background:#020617;border:1px solid #1e293b;
+  border-radius:8px;width:150px;display:none
+}
+.profile-menu div{padding:10px;cursor:pointer}
+.profile-menu div:hover{background:#1e293b}
+
+/* LAYOUT */
+.layout{display:flex;height:calc(100vh - 60px)}
+.sidebar{
+  width:220px;background:#020617;
+  border-right:1px solid #1e293b;
+  padding-top:10px;display:none
+}
+.sidebar div{padding:14px 20px;cursor:pointer}
+.sidebar div:hover{background:#1e293b}
+.sidebar div.active{
+  background:#1e293b;color:#38bdf8;
+  border-left:4px solid #38bdf8
+}
+.main{flex:1;padding:30px}
+
+/* SECTIONS */
+.section{display:none}
+.section.active{display:block}
+
+/* LOGIN / REGISTER BOX */
+.login-box{
+  max-width:360px;background:#020617;
+  padding:30px;border-radius:12px;
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 30px rgba(56,189,248,.2)
+}
+
+input,button.primary{
+  width:100%;padding:10px;margin-top:12px;
+  border-radius:6px;border:none;font-size:15px
+}
+input{
+  background:#020617;color:#e5e7eb;
+  border:1px solid #38bdf8
+}
+button.primary{
+  background:#38bdf8;color:#020617;
+  cursor:pointer;font-weight:bold
+}
+.hidden{display:none}
+
+/* STUDY */
+.study-streams{display:flex;flex-direction:column;gap:15px;max-width:420px}
+.study-streams button{
+  padding:14px;font-size:16px;border-radius:8px;
+  border:none;background:#38bdf8;color:#020617
+}
+
+/* SAFETY: SIDEBAR NEVER DURING AUTH */
+#login.active ~ .layout .sidebar,
+#register.active ~ .layout .sidebar,
+#forgot.active ~ .layout .sidebar {
+  display:none !important;
+}
+/* FIX: block sidebar during auth screens */
+#login.active ~ .layout .sidebar,
+#register.active ~ .layout .sidebar,
+#forgot.active ~ .layout .sidebar {
+  display: none !important;
+}
+/* ===== STUDY / NOTES UI ===== */
+
+.notes-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:16px;
+  margin-top:20px;
+}
+
+.notes-card{
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:12px;
+  padding:18px;
+  text-align:center;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.notes-card:hover{
+  border-color:#38bdf8;
+  transform:translateY(-2px);
+}
+
+.notes-card h3{
+  margin:0;
+  font-size:16px;
+  color:#38bdf8;
+}
+
+.notes-card p{
+  margin-top:6px;
+  font-size:13px;
+  color:#94a3b8;
+}
+
+.action-buttons{
+  display:flex;
+  gap:14px;
+  margin-top:25px;
+}
+
+.action-buttons button{
+  flex:1;
+  padding:14px;
+  border-radius:10px;
+  border:none;
+  font-size:15px;
+  background:#020617;
+  color:#38bdf8;
+  border:1px solid #38bdf8;
+  cursor:pointer;
+}
+
+.action-buttons button:hover{
+  background:#38bdf8;
+  color:#020617;
+}
+/* ===== GLOBAL BUTTON ANIMATIONS ===== */
+
+button,
+.notes-card,
+.sidebar div {
+  transition: 
+    transform .15s ease,
+    box-shadow .15s ease,
+    background .15s ease,
+    color .15s ease,
+    border .15s ease;
+}
+
+/* Hover lift */
+button:hover,
+.notes-card:hover,
+.sidebar div:hover {
+  transform: translateY(-2px);
+}
+
+/* Click press */
+button:active,
+.notes-card:active,
+.sidebar div:active {
+  transform: scale(0.97);
+}
+
+/* Glow for primary buttons */
+button.primary:hover {
+  box-shadow: 0 0 18px rgba(56,189,248,.6);
+}
+
+/* Notes cards glow */
+.notes-card:hover {
+  box-shadow: 0 10px 25px rgba(0,0,0,.4),
+              0 0 18px rgba(56,189,248,.25);
+}
+
+/* Sidebar active pulse */
+.sidebar div.active {
+  animation: activePulse 1.8s infinite;
+}
+
+@keyframes activePulse {
+  0% { box-shadow: inset 0 0 0 rgba(56,189,248,0); }
+  50% { box-shadow: inset 4px 0 12px rgba(56,189,248,.4); }
+  100% { box-shadow: inset 0 0 0 rgba(56,189,248,0); }
+}
+
+/* Smooth fade-in for sections */
+.section.active {
+  animation: fadeIn .25s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity:0;
+    transform:translateY(6px);
+  }
+  to {
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+/* ===== SEMESTER VERTICAL LAYOUT ===== */
+
+/* Parent container that holds semester buttons */
+#semesterContainer,
+.semester-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 220px;
+}
+
+/* Semester button style */
+.semester-btn {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #111827;
+  color: #e5e7eb;
+  font-weight: 600;
+  text-align: left;
+  border: 1px solid #1f2937;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hover effect */
+.semester-btn:hover {
+  background: #0f172a;
+  border-color: #38bdf8;
+  box-shadow: 0 8px 22px rgba(56,189,248,.25);
+  transform: translateX(4px);
+}
+
+/* Active semester */
+.semester-btn.active {
+  background: linear-gradient(135deg,#0ea5e9,#38bdf8);
+  color: #020617;
+  box-shadow: 0 10px 25px rgba(56,189,248,.45);
+}
+
+/* Active indicator bar */
+.semester-btn.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  background: #020617;
+  border-radius: 0 6px 6px 0;
+}
+
+/* Smooth entry animation */
+.semester-btn {
+  animation: semesterIn .25s ease;
+}
+
+@keyframes semesterIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile full width */
+@media (max-width: 768px) {
+  #semesterContainer,
+  .semester-list {
+    max-width: 100%;
+  }
+}
+/* ===== MEMORIES ===== */
+.memories-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:16px;
+  margin-top:20px;
+}
+
+.memories-grid img{
+  width:100%;
+  border-radius:12px;
+  cursor:pointer;
+  border:2px solid #1e293b;
+  transition:.2s;
+}
+
+.memories-grid img:hover{
+  border-color:#38bdf8;
+  transform:scale(1.03);
+}
+
+/* Fullscreen viewer */
+.memory-viewer{
+  position:fixed;
+  inset:0;
+  background:rgba(2,6,23,.95);
+  display:none;   /* ✅ IMPORTANT */
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+
+.memory-viewer img{
+  max-width:90%;
+  max-height:80%;
+  border-radius:12px;
+}
+
+.memory-viewer .close{
+  position:absolute;
+  top:20px;
+  right:25px;
+  font-size:22px;
+  cursor:pointer;
+}
+
+.memory-nav{
+  margin-top:15px;
+  display:flex;
+  gap:20px;
+}
+
+.memory-nav button{
+  padding:12px 20px;
+  border-radius:10px;
+  border:none;
+  background:#38bdf8;
+  font-size:18px;
+  cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="logo">Studixa</div>
+
+  <div class="nav-right" id="navRight">
+    <button onclick="showHome()">Home</button>
+    <button onclick="showAbout()">About</button>
+    <button onclick="showLogin()">Login</button>
+  </div>
+
+  <div class="profile hidden" id="profile">
+    <span onclick="toggleProfile()">Profile ⬇</span>
+    <div class="profile-menu" id="profileMenu">
+      <div onclick="showProfile()">Profile</div>
+      <div onclick="logout()">Logout</div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="logo">Studixa</div>
+  <div onclick="activate(this);showHome()">Dashboard</div>
+  <div onclick="activate(this);showStudy()">Study</div>
+  <div onclick="activate(this)">AI</div>
+  <div onclick="activateIfAllowed(this)">Memories</div>
+  <div onclick="activate(this);showAbout()">About</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+<!-- NOTES -->
+<div id="notes" class="section">
+  <h2 id="notesTitle">Notes</h2>
+  <div id="notesContent"></div>
+</div>
+
+<div id="home" class="section active">
+  <h1>Welcome to Studixa 📚</h1>
+</div>
+
+<div id="about" class="section">
+  <h2>About</h2>
+
+  <p><strong>Built &amp; Maintained by</strong><br>
+     Botany Department
+  </p>
+
+  <p><strong>Supported by Sahajahan Ahmeed</strong></p>
+
+  <p>
+    This platform is created to help, guide, and support upcoming juniors and students
+    in their academic journey.
+  </p>
+
+  <p><strong>Batch 2023–2027</strong></p>
+</div>
+
+<!-- MEMORIES -->
+<div id="memories" class="section">
+  <h2>Our Memories 💙</h2>
+
+  <div class="memories-grid">
+    <img src="images/college-campus.jpg" onclick="openMemory(0)">
+    <img src="images/freshers.jpg" onclick="openMemory(1)">
+    <img src="images/freshers-1.jpg" onclick="openMemory(2)">
+    <img src="images/kalimpong-1.jpg" onclick="openMemory(3)">
+    <img src="images/kalimpong-2.jpg" onclick="openMemory(4)">
+  </div>
+</div>
+
+<!-- MEMORY VIEWER -->
+<div id="memoryViewer" class="memory-viewer hidden">
+  <span class="close" onclick="closeMemory()">✖</span>
+  <img id="memoryImage">
+  <div class="memory-nav">
+    <button onclick="prevMemory()">⬅</button>
+    <button onclick="nextMemory()">➡</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login" class="section">
+  <div class="login-box">
+    <h2>Login</h2>
+    <input id="loginEmail" placeholder="Email">
+    <input id="loginPassword" type="password" placeholder="Password">
+    <button class="primary" onclick="login()">Login</button>
+    <p style="text-align:center;margin-top:15px">
+      <span style="color:#38bdf8;cursor:pointer" onclick="showRegister()">Create account</span> ·
+      <span style="color:#38bdf8;cursor:pointer" onclick="showForgot()">Forgot?</span>
+    </p>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div id="register" class="section">
+  <div class="login-box">
+    <h2>Create Account</h2>
+    <input id="regEmail" placeholder="Email / Mobile">
+    <input id="regInstitute" placeholder="Institute">
+    <input id="regPass" type="password" placeholder="Password">
+    <input id="regPass2" type="password" placeholder="Confirm Password">
+    <button class="primary" onclick="register()">Create</button>
+    <p style="text-align:center;margin-top:15px">
+      <span style="color:#38bdf8;cursor:pointer" onclick="showLogin()">Back to login</span>
+    </p>
+  </div>
+</div>
+
+<!-- FORGOT -->
+<div id="forgot" class="section">
+  <div class="login-box">
+    <h2>Forgot Password</h2>
+    <input id="forgotEmail" placeholder="Email">
+    <button class="primary" onclick="forgot()">Send Reset</button>
+    <p style="text-align:center;margin-top:15px">
+      <span style="color:#38bdf8;cursor:pointer" onclick="showLogin()">Back</span>
+    </p>
+  </div>
+</div>
+
+<div id="study" class="section">
+  <h2>Study</h2>
+  <div class="study-streams">
+    <button onclick="selectStream('arts')">Arts</button>
+    <button onclick="selectStream('science')">Science</button>
+    <button onclick="selectStream('computer')">Computer</button>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div id="profilePage" class="section">
+  <h2>My Profile</h2>
+  <p id="profileInfo"></p>
+</div>
+
+</div>
+</div>
+
+<script>
+
+const sections=document.querySelectorAll('.section');
+const notesTitle = document.getElementById("notesTitle");
+const notesContent = document.getElementById("notesContent");
+const users=JSON.parse(localStorage.getItem("users")||"[]");
+
+function hideAll(){sections.forEach(s=>s.classList.remove('active'))}
+function show(id){hideAll();document.getElementById(id).classList.add('active')}
+
+function showHome(){show('home')}
+function showAbout(){show('about')}
+function showLogin(){show('login')}
+function showRegister(){show('register')}
+function showForgot(){show('forgot')}
+function showStudy(){show('study')}
+function showProfile(){
+  show('profilePage');
+  const u=JSON.parse(localStorage.getItem("currentUser"));
+  document.getElementById("profileInfo").innerHTML =`Email: ${u.email}<br>Institute: ${u.name}`;
+}
+let currentStream = "";
+let currentSubject = "";
+
+const subjectsByStream = {
+  arts: ["History", "English", "Economics"],
+  science: ["Physics", "Chemistry", "Biology"],
+  computer: ["Programming", "DBMS", "Networking"]
+};
+
+const biologyBranches = ["Botany", "Zoology"];
+
+
+function selectStream(stream){
+  currentStream = stream;
+  notesTitle.innerText = stream.toUpperCase() + " Notes";
+  renderSubjects();
+  show('notes');
+}
+
+function renderSubjects(){
+  notesContent.innerHTML = '<div class="notes-grid"></div>';
+  const grid = notesContent.querySelector(".notes-grid");
+
+  subjectsByStream[currentStream].forEach(sub=>{
+    const card = document.createElement("div");
+    card.className = "notes-card";
+    card.innerHTML = `
+      <h3>${sub}</h3>
+      <p>View semesters</p>
+    `;
+    card.onclick = () => selectSubject(sub.toLowerCase());
+    grid.appendChild(card);
+  });
+}
+
+let currentSemester = 0;
+
+function selectSubject(subject){
+  currentSubject = subject;
+
+  /* BIOLOGY SPLIT */
+  if (currentStream === "science" && subject === "biology") {
+    notesTitle.innerText = "BIOLOGY";
+    notesContent.innerHTML = '<div class="notes-grid"></div>';
+    const grid = notesContent.querySelector(".notes-grid");
+
+    biologyBranches.forEach(branch => {
+      const card = document.createElement("div");
+      card.className = "notes-card";
+      card.innerHTML = `<h3>${branch}</h3><p>Select branch</p>`;
+      card.onclick = () => selectBiologyBranch(branch.toLowerCase());
+      grid.appendChild(card);
+    });
+    return;
+  }
+
+  showSemesters();
+}
+function selectBiologyBranch(branch){
+  currentSubject = branch;
+  showSemesters();
+}
+
+function showSemesters(){
+  notesTitle.innerText =
+    currentStream.toUpperCase() + " → " + currentSubject.toUpperCase();
+
+  notesContent.innerHTML = '<div id="semesterContainer"></div>';
+  const container = document.getElementById("semesterContainer");
+
+  for(let sem = 1; sem <= 8; sem++){
+    const btn = document.createElement("button");
+    btn.className = "semester-btn";
+    btn.innerText = "Semester " + sem;
+    btn.onclick = function(){
+      selectSemester(sem, this);
+    };
+    container.appendChild(btn);
+  }
+}
+
+function selectSemester(sem, el){
+  currentSemester = sem;
+
+  // active state
+  document.querySelectorAll(".semester-btn")
+    .forEach(b => b.classList.remove("active"));
+  if (el) el.classList.add("active");
+
+  notesTitle.innerText =
+    currentStream.toUpperCase()+" → "+
+    currentSubject.toUpperCase()+" → SEM "+sem;
+
+  notesContent.innerHTML = `
+    <div class="notes-grid">
+      <div class="notes-card" onclick="showNotes()">
+        <h3>📘 Notes</h3>
+        <p>Study material PDFs</p>
+      </div>
+
+      <div class="notes-card" onclick="showSyllabus()">
+        <h3>📑 Syllabus</h3>
+        <p>Semester syllabus</p>
+      </div>
+
+      <div class="notes-card" onclick="showPrevious()">
+        <h3>📝 Previous Questions</h3>
+        <p>Past exam papers</p>
+      </div>
+    </div>
+
+    <br>
+    <button class="primary" onclick="showSemesters()">
+      ⬅ Back to Semesters
+    </button>
+  `;
+}
+function showSyllabus(){
+  notesTitle.innerText =
+    currentStream.toUpperCase()+" → "+
+    currentSubject.toUpperCase()+" → SEM "+
+    currentSemester+" → SYLLABUS";
+
+  const data =
+    notesData?.[currentStream]?.[currentSubject]?.[currentSemester]?.syllabus || [];
+
+  if(data.length === 0){
+    notesContent.innerHTML = `
+      <p>No syllabus uploaded.</p>
+      <button class="primary" onclick="selectSemester(currentSemester)">
+        ⬅ Back
+      </button>
+    `;
+    return;
+  }
+
+  notesContent.innerHTML = `
+    <div class="notes-grid">
+      ${data.map(d=>`
+        <div class="notes-card" onclick="window.open('${d.file}','_blank')">
+          <h3>${d.title}</h3>
+          <p>Open PDF</p>
+        </div>
+      `).join("")}
+    </div>
+
+    <br>
+    <button class="primary" onclick="selectSemester(currentSemester)">
+      ⬅ Back
+    </button>
+  `;
+}
+function showNotes(){
+  notesTitle.innerText =
+    currentStream.toUpperCase()+" → "+
+    currentSubject.toUpperCase()+" → SEM "+
+    currentSemester+" → NOTES";
+
+  notesContent.innerHTML = `
+    <p>No notes uploaded yet.</p>
+    <button class="primary" onclick="selectSemester(currentSemester)">
+      ⬅ Back
+    </button>
+  `;
+}
+
+function showPrevious(){
+  notesTitle.innerText =
+    currentStream.toUpperCase()+" → "+
+    currentSubject.toUpperCase()+" → SEM "+
+    currentSemester+" → PREVIOUS QUESTIONS";
+
+  notesContent.innerHTML = `
+    <p>No previous questions uploaded yet.</p>
+    <button class="primary" onclick="selectSemester(currentSemester)">
+      ⬅ Back
+    </button>
+  `;
+}
+
+const notesData = {
+  arts: {
+    history: {
+      1: { notes: [], syllabus: [], previous: [] }
+    }
+  },
+
+ science: {
+  botany: {
+    1:{ syllabus:[{title:"Botany Syllabus",file:"pdf/botany/syllabus/botany-syllabus.pdf"}]},
+    2:{ syllabus:[{title:"Botany Syllabus",file:"pdf/botany/syllabus/botany-syllabus.pdf"}]},
+    3:{ syllabus:[{title:"Botany Syllabus",file:"pdf/botany/syllabus/botany-syllabus.pdf"}]},
+    4:{ syllabus:[{title:"Botany Syllabus",file:"pdf/botany/syllabus/botany-syllabus.pdf"}]},
+    5:{ syllabus:[{title:"Botany Syllabus",file:"pdf/botany/syllabus/botany-syllabus.pdf"}]},
+    6:{ syllabus:[{title:"Botany Syllabus",file:"pdf/botany/syllabus/botany-syllabus.pdf"}]},
+    7:{ syllabus:[{title:"Botany Syllabus",file:"pdf/botany/syllabus/botany-syllabus.pdf"}]},
+    8:{ syllabus:[{title:"Botany Syllabus",file:"pdf/botany/syllabus/botany-syllabus.pdf"}]}
+  },
+
+  zoology: {
+  1:{ syllabus:[{title:"Zoology NEP Syllabus",file:"pdf-zoology/Zoology NEP Syllabus.pdf"}]},
+  2:{ syllabus:[{title:"Zoology NEP Syllabus",file:"pdf-zoology/Zoology NEP Syllabus.pdf"}]},
+  3:{ syllabus:[{title:"Zoology NEP Syllabus",file:"pdf-zoology/Zoology NEP Syllabus.pdf"}]},
+  4:{ syllabus:[{title:"Zoology NEP Syllabus",file:"pdf-zoology/Zoology NEP Syllabus.pdf"}]},
+  5:{ syllabus:[{title:"Zoology NEP Syllabus",file:"pdf-zoology/Zoology NEP Syllabus.pdf"}]},
+  6:{ syllabus:[{title:"Zoology NEP Syllabus",file:"pdf-zoology/Zoology NEP Syllabus.pdf"}]},
+  7:{ syllabus:[{title:"Zoology NEP Syllabus",file:"pdf-zoology/Zoology NEP Syllabus.pdf"}]},
+  8:{ syllabus:[{title:"Zoology NEP Syllabus",file:"pdf-zoology/Zoology NEP Syllabus.pdf"}]}
+  }
+ }
+}
+
+
+function activate(el){
+  document.querySelectorAll('.sidebar div')
+    .forEach(d => d.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+function activateIfAllowed(el){
+  const u = JSON.parse(localStorage.getItem("currentUser"));
+
+  if (
+    !u ||
+    !u.name ||
+    !u.name.toLowerCase().includes("gossaigaon")
+  ) {
+    alert("Memories are only visible to Gossaigaon College students.");
+    return;
+  }
+
+  document.querySelectorAll('.sidebar div')
+    .forEach(d => d.classList.remove('active'));
+
+  activate(el);
+  show("memories");
+}
+
+
+async function register() {
+  const email = regEmail.value.trim();
+  const password = regPass.value;
+  const password2 = regPass2.value;
+  const institute = regInstitute.value.trim();
+
+  if (!email || !password || !password2 || !institute) {
+    alert("All fields required");
+    return;
+  }
+
+  if (password !== password2) {
+    alert("Passwords do not match");
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: institute,
+        email,
+        password
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Registration failed");
+      return;
+    }
+
+    alert("Registration successful. Please login.");
+    showLogin();
+
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
+  }
+}
+
+async function login(){
+  try{
+    const res = await fetch("http://localhost:5000/api/auth/login",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        email: loginEmail.value,
+        password: loginPassword.value
+      })
+    });
+
+    const data = await res.json();
+    if(!res.ok) return alert(data.message || "Login failed");
+
+    // store token + user
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("currentUser", JSON.stringify(data.user));
+
+    sidebar.style.display="block";
+    navRight.style.display="none";
+    profile.classList.remove("hidden");
+    showHome();
+  }catch(err){
+    alert("Server error");
+  }
+}
+
+
+
+function forgot(){
+  alert("Reset link sent (demo)");
+}
+
+function logout(){
+  localStorage.removeItem("currentUser");
+  localStorage.removeItem("token"); // ✅ ADD THIS
+
+  sidebar.style.display="none";
+  navRight.style.display="block";
+  profile.classList.add("hidden");
+  showHome();
+}
+
+function toggleProfile(){
+  profileMenu.style.display = profileMenu.style.display==="block"?"none":"block";
+}
+/* FIX: close profile menu on outside click */
+document.addEventListener("click", function (e) {
+  if (!profile.contains(e.target)) {
+    profileMenu.style.display = "none";
+  }
+});
+
+/* ===== ADD-ONLY FIXES ===== */
+
+/* Close profile menu on outside click */
+document.addEventListener("click",e=>{
+  if(!profile.contains(e.target)){
+    profileMenu.style.display="none";
+  }
+});
+/* FIX: restore UI state on reload */
+(async function initAuth(){
+  const token = localStorage.getItem("token");
+  if(!token) return;
+
+  try{
+    const res = await fetch("http://localhost:5000/api/auth/profile",{
+      headers:{
+        "Authorization":"Bearer "+token
+      }
+    });
+
+    if(!res.ok){
+      localStorage.removeItem("token");
+      localStorage.removeItem("currentUser");
+      return;
+    }
+
+    const user = await res.json();
+    localStorage.setItem("currentUser", JSON.stringify(user));
+
+    sidebar.style.display="block";
+    navRight.style.display="none";
+    profile.classList.remove("hidden");
+    showHome();
+
+  }catch(err){
+    localStorage.removeItem("token");
+    localStorage.removeItem("currentUser");
+  }
+})();
+
+/* ===== MEMORIES LOGIC ===== */
+
+const memoryImages = [
+  "images/college-campus.jpg",
+  "images/freshers.jpg",
+  "images/freshers-1.jpg",
+  "images/kalimpong-1.jpg",
+  "images/kalimpong-2.jpg"
+];
+
+let currentMemoryIndex = 0;
+function canViewMemories(){
+  const u = JSON.parse(localStorage.getItem("currentUser"));
+  return (
+    u &&
+    u.name &&
+    u.name.toLowerCase().includes("gossaigaon")
+  );
+}
+
+function openMemory(index){
+  if(!canViewMemories()){
+    alert("Memories are only for Gossaigaon College students.");
+    return;
+  }
+
+  currentMemoryIndex = index;
+  memoryImage.src = memoryImages[index];
+  memoryViewer.style.display = "flex";
+}
+
+function closeMemory(){
+ memoryViewer.style.display = "none";
+}
+
+function nextMemory(){
+  currentMemoryIndex =
+    (currentMemoryIndex + 1) % memoryImages.length;
+  memoryImage.src = memoryImages[currentMemoryIndex];
+}
+
+function prevMemory(){
+  currentMemoryIndex =
+    (currentMemoryIndex - 1 + memoryImages.length) % memoryImages.length;
+  memoryImage.src = memoryImages[currentMemoryIndex];
+}
+
+</script>
+
+</body>
+</html>

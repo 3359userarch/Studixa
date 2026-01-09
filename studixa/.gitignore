@@ -1,0 +1,9 @@
+node_modules/
+**/node_modules/
+.env
+.env*
+mobile/
+studixa/mobile/
+dist/
+build/
+.DS_Store
