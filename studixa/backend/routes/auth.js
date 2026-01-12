@@ -112,25 +112,34 @@ router.post("/forgot-password", async (req, res) => {
     const { email } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
+    if (!user) return res.status(400).json({ message: "User not found" });
 
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
     await user.save();
 
-    res.json({
-      message: "Password reset token generated",
-      resetToken
+    const resetUrl =
+      `https://studixa-frontend.onrender.com/reset.html?token=${resetToken}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
     });
-  } catch (err) {
+
+    await transporter.sendMail({
+      to: user.email,
+      subject: "Studixa Password Reset",
+      html: `<a href="${resetUrl}">Reset Password</a>`
+    });
+
+    res.json({ message: "Reset email sent" });
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -144,14 +153,14 @@ router.post("/reset-password", async (req, res) => {
 
   const user = await User.findOne({
     resetPasswordToken: hashedToken,
-    resetPasswordExpires: { $gt: Date.now() }
+    resetPasswordExpire: { $gt: Date.now() }
   });
 
   if (!user) return res.status(400).json({ message: "Invalid token" });
 
   user.password = await bcrypt.hash(password, 10);
   user.resetPasswordToken = undefined;
-  user.resetPasswordExpires = undefined;
+  user.resetPasswordExpire = undefined;
 
   await user.save();
   res.json({ message: "Password reset successful" });
